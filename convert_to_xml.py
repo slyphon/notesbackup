@@ -1,7 +1,7 @@
 import plistlib as P
 import subprocess
 from glob import glob
-from os.path import join, basename, splitext
+from os.path import basename, join, splitext
 
 
 def convert_to_xml(path):
