@@ -21,7 +21,8 @@ NOTES_DB_PATH = Path(
 
 NOTES_BACKUP_DIR = Path("~/Documents/notesbackup/backups").expanduser()
 
-INSTALL_DIR = Path("~/.notesbackup").expanduser()
+INSTALL_DIR = Path(os.getenv("NOTES_BACKUP_INSTALL_PATH", "/opt/notesbackup"))
+WRAPPER = INSTALL_DIR.joinpath("backup-notes.sh")
 
 @attr.s(auto_attribs=True, frozen=True, slots=True)
 class Config:
@@ -48,7 +49,6 @@ TS = NOW.format("YYYYMMDDHHmmssZZ")
 
 def backup_path(cfg: Config) -> Path:
   return cfg.dst.joinpath(f"{TS}_{cfg.freq}.sql.xz")
-
 
 def prune(cfg: Config) -> None:
   backups = sorted(list(cfg.dst.glob(f"*_{cfg.freq}.sql.xz")))
@@ -156,24 +156,13 @@ def launchd_template(freq: str) -> str:
 <dict>
 \t<key>Disabled</key>
 \t<false/>
-\t<key>EnvironmentVariables</key>
-\t<dict>
-\t\t<key>PIPENV_DEFAULT_PYTHON_VERSION</key>
-\t\t<string>/usr/bin/python3</string>
-\t\t<key>PIPENV_NOSPIN</key>
-\t\t<string>1</string>
-\t\t<key>PIPENV_VENV_IN_PROJECT</key>
-\t\t<string>1</string>
-\t</dict>
 \t<key>Label</key>
 \t<string>com.slyphon.notes.backup.{freq}</string>
 \t<key>KeepAlive</key>
 \t<false/>
 \t<key>ProgramArguments</key>
 \t<array>
-\t\t<string>/usr/local/bin/pipenv</string>
-\t\t<string>run</string>
-\t\t<string>./backup_notes.py</string>
+\t\t<string>{WRAPPER!s}</string>
 \t\t<string>--freq={freq}</string>
 \t\t<string>-v</string>
 \t</array>
@@ -183,11 +172,13 @@ def launchd_template(freq: str) -> str:
 \t<dict>
 {interval.to_plist()}
 \t</dict>
-\t<key>WorkingDirectory</key>
-\t<string>{INSTALL_DIR}</string>
 </dict>
 </plist>
 """
+
+
+def install_shim():
+  pass
 
 USER_AGENTS_DIR = Path("~/Library/LaunchAgents").expanduser()
 
